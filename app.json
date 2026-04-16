@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "psoriapp2",
-    "slug": "psoriapp2",
+    "name": "psoriapp",
+    "slug": "psoriapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "psoriapp2",
+    "scheme": "psoriapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -38,7 +38,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

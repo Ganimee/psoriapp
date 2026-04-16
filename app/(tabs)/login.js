@@ -121,8 +121,22 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 80,
     borderBottomRightRadius: 80,
   },
-  logoOuter: { width: 96, height: 96, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  logoInner: { width: 64, height: 64, borderRadius: 12 },
+  logoOuter: { 
+  width: 96,
+  height: 96,
+  borderRadius: 48,      // tam daire
+  overflow: 'hidden',     // bu çok önemli!
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginBottom: 12,
+  backgroundColor: 'white', // istersen arka plan
+},
+
+logoInner: {
+  width: '100%',
+  height: '100%',
+  resizeMode: 'cover',    
+},
   title: { color: 'white', fontSize: 32, fontWeight: 'bold', letterSpacing: 2 },
   form: { flex: 1, paddingHorizontal: 20, paddingTop: 30 },
   input: {
@@ -132,7 +146,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingHorizontal: 20,
     paddingVertical: 10, // dikey padding eklendi
-    marginBottom: 15,
+    marginBottom: 19,
     backgroundColor: 'white',
   },
   inputError: {
@@ -145,7 +159,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontWeight: '500',
   },
-  forgotButton: { alignSelf: 'flex-end', marginBottom: 20 },
+  forgotButton: { alignSelf: 'flex-end', marginBottom: 20
+   },
   forgotText: { color: '#8B2635', fontSize: 12 },
   loginButton: {
     height: 50,
