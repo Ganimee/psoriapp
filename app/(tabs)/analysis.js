@@ -2,19 +2,21 @@ import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Home, Activity, Pill, BarChart3, User } from 'lucide-react-native';
 
-export default function HomeScreen() {
+export default function AnalysisScreen() {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
       
-      {/* SAYFA BOŞ - SADE */}
+      {/* SAYFA BOŞ */}
 
-      {/* ALT MENÜ */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Home size={22} color="#8B2635" />
-          <Text style={[styles.navText, { color: '#8B2635' }]}>Ana Sayfa</Text>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => router.push('/home')}
+        >
+          <Home size={22} color="#b9a7ab" />
+          <Text style={styles.navText}>Ana Sayfa</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -33,12 +35,9 @@ export default function HomeScreen() {
           <Text style={styles.navText}>Tedaviler</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push('/analysis')}
-        >
-          <BarChart3 size={22} color="#b9a7ab" />
-          <Text style={styles.navText}>Analiz</Text>
+        <TouchableOpacity style={styles.navItem}>
+          <BarChart3 size={22} color="#8B2635" />
+          <Text style={[styles.navText, { color: '#8B2635' }]}>Analiz</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -57,7 +56,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF5F6', // 🔥 senin tema rengi
+    backgroundColor: '#FFF5F6',
   },
 
   bottomNav: {
