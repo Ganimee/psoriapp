@@ -35,10 +35,10 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => router.push('/analysis')}
+          onPress={() => router.push('/fototerapi')}
         >
           <BarChart3 size={22} color="#b9a7ab" />
-          <Text style={styles.navText}>Analiz</Text>
+          <Text style={styles.navText}>Fototerapi Takibi</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

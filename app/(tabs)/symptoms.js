@@ -910,7 +910,7 @@ export default function SymptomsScreen() {
 
   <TouchableOpacity onPress={() => router.push('/analysis')} style={styles.navItem}>
     <BarChart3 size={22} color="#b9a7ab" />
-    <Text style={styles.navText}>Analiz</Text>
+    <Text style={styles.navText}>Fototerapi Takibi</Text>
   </TouchableOpacity>
 
   <TouchableOpacity onPress={() => router.push('/profile')} style={styles.navItem}>

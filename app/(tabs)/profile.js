@@ -530,9 +530,9 @@ export default function ProfileScreen() {
           <Text style={styles.navText}>Tedaviler</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/analysis')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/fototerapi')}>
           <BarChart3 size={22} color="#b9a7ab" />
-          <Text style={styles.navText}>Analiz</Text>
+          <Text style={styles.navText}>Fototerapi Takibi</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem}>

@@ -393,9 +393,9 @@ export default function TreatmentsScreen() {
           <Text style={[styles.navText, { color: '#8B2635' }]}>Tedaviler</Text>
         </Pressable>
 
-        <Pressable style={styles.navItem} onPress={() => router.push('/analysis')}>
+        <Pressable style={styles.navItem} onPress={() => router.push('/fototerapi')}>
           <BarChart3 size={22} color="#b9a7ab" />
-          <Text style={styles.navText}>Analiz</Text>
+          <Text style={styles.navText}>Fototerapi Takibi</Text>
         </Pressable>
 
         <Pressable style={styles.navItem} onPress={() => router.push('/profile')}>
