@@ -3,6 +3,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Kayit() {
   const router = useRouter();
@@ -19,15 +20,29 @@ export default function Kayit() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState(''); // 'terms' veya 'privacy'
 
-  const handleKaydol = () => {
-    if (!formData.termsAccepted) {
-      Alert.alert('Hata', 'Kayıt olmak için kullanım koşullarını kabul etmelisiniz.');
-      return;
-    }
+  const handleKaydol = async () => {
+  if (!formData.termsAccepted) {
+    Alert.alert('Hata', 'Kayıt olmak için kullanım koşullarını kabul etmelisiniz.');
+    return;
+  }
+
+  if (!formData.cinsiyet) {
+    Alert.alert('Hata', 'Lütfen cinsiyet seçiniz.');
+    return;
+  }
+
+  try {
+    // ✅ CİNSİYETİ KAYDET
+    await AsyncStorage.setItem('user_gender', formData.cinsiyet);
+
     Alert.alert('Başarılı', 'Kayıt işlemi tamamlandı!', [
       { text: 'Tamam', onPress: () => router.push('/login') },
     ]);
-  };
+  } catch (error) {
+    console.log(error);
+    Alert.alert('Hata', 'Kayıt sırasında sorun oluştu.');
+  }
+};
 
   const openModal = (type) => {
     setModalType(type);
@@ -72,8 +87,8 @@ export default function Kayit() {
               itemStyle={{textAlign:'center', height:50}}
             >
               <Picker.Item label="Cinsiyet" value="" />
-              <Picker.Item label="Kadın" value="kadın" />
-              <Picker.Item label="Erkek" value="erkek" />
+              <Picker.Item label="Kadın" value="female" />
+              <Picker.Item label="Erkek" value="male" />   
             </Picker>
           </View>
 

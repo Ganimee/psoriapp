@@ -1,36 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ScrollView,
-  Image,
-  Alert,
-  Platform,
-  
-
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import * as Location from 'expo-location';
-import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Slider from '@react-native-community/slider';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { TextInput } from 'react-native';
+import Slider from '@react-native-community/slider';
+import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import Body from 'react-native-body-highlighter';
+import {
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import {
-  Home,
   Activity,
-  Pill,
   BarChart3,
-  User,
-  Camera,
-  Image as ImageIcon,
   CalendarDays,
+  Camera,
+  Home,
+  Image as ImageIcon,
+  Pill,
   Save,
   Trash2,
-  
+  User,
 } from 'lucide-react-native';
 
 const STORAGE_KEY = 'symptom_records_v1';
@@ -59,26 +57,9 @@ export default function SymptomsScreen() {
   const [showFilterEndPicker, setShowFilterEndPicker] = useState(false);
   const [filteredSymptoms, setFilteredSymptoms] = useState([]);
   const [note, setNote] = useState('');
+  const [userGender, setUserGender] = useState('female');
 
-  const frontParts = [
-    { key: 'head-front', label: 'Baş (Ön)' },
-    { key: 'chest', label: 'Göğüs' },
-    { key: 'abdomen', label: 'Karın' },
-    { key: 'left-arm-front', label: 'Sol Kol (Ön)' },
-    { key: 'right-arm-front', label: 'Sağ Kol (Ön)' },
-    { key: 'left-leg-front', label: 'Sol Bacak (Ön)' },
-    { key: 'right-leg-front', label: 'Sağ Bacak (Ön)' },
-  ];
-
-  const backParts = [
-    { key: 'head-back', label: 'Baş (Arka)' },
-    { key: 'upper-back', label: 'Sırt Üst' },
-    { key: 'lower-back', label: 'Bel / Sırt Alt' },
-    { key: 'left-arm-back', label: 'Sol Kol (Arka)' },
-    { key: 'right-arm-back', label: 'Sağ Kol (Arka)' },
-    { key: 'left-leg-back', label: 'Sol Bacak (Arka)' },
-    { key: 'right-leg-back', label: 'Sağ Bacak (Arka)' },
-  ];
+  
 
   const moodOptions = [
     'Mutluluk',
@@ -90,24 +71,44 @@ export default function SymptomsScreen() {
     'Yorgunluk',
   ];
 
-  const allParts = [...frontParts, ...backParts];
+const loadUserGender = async () => {
+  try {
+    const storedGender = await AsyncStorage.getItem('user_gender');
+
+    if (storedGender === 'female' || storedGender === 'male') {
+      setUserGender(storedGender);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   useEffect(() => {
     fetchWeather();
     loadSavedSymptoms();
+    loadUserGender();
   }, []);
 
   useEffect(() => {
     setFilteredSymptoms(savedSymptoms);
   }, [savedSymptoms]);
 
-  const togglePart = (part) => {
-    if (selectedParts.includes(part)) {
-      setSelectedParts(selectedParts.filter((p) => p !== part));
-    } else {
-      setSelectedParts([...selectedParts, part]);
+  const togglePart = (slug, side = null) => {
+  setSelectedParts((prev) => {
+    const exists = prev.some(
+      (item) => item.slug === slug && (item.side || null) === (side || null)
+    );
+
+    if (exists) {
+      return prev.filter(
+        (item) => !(item.slug === slug && (item.side || null) === (side || null))
+      );
     }
-  };
+
+    return [...prev, side ? { slug, side } : { slug }];
+  });
+};
+
 
   const toggleMood = (mood) => {
     if (selectedMoods.includes(mood)) {
@@ -117,13 +118,43 @@ export default function SymptomsScreen() {
     }
   };
 
-  const getColor = (part) =>
-    selectedParts.includes(part) ? '#8B2635' : '#E2E8F0';
+  
 
-  const getPartLabel = (partKey) => {
-    const found = allParts.find((item) => item.key === partKey);
-    return found ? found.label : partKey;
+  const getPartLabel = (part) => {
+  const labels = {
+    head: 'Baş',
+    neck: 'Boyun',
+    chest: 'Göğüs',
+    abs: 'Karın',
+    obliques: 'Yan Karın',
+    deltoids: 'Omuz',
+    biceps: 'Kol Üst',
+    triceps: 'Arka Kol',
+    forearm: 'Ön Kol',
+    hands: 'El',
+    quadriceps: 'Üst Bacak',
+    knees: 'Diz',
+    calves: 'Baldır',
+    feet: 'Ayak',
+    'upper-back': 'Üst Sırt',
+    'lower-back': 'Alt Sırt',
+    gluteal: 'Kalça',
+    hamstring: 'Arka Üst Bacak',
+    trapezius: 'Ense / Omuz Üstü',
   };
+
+  const slug = typeof part === 'string' ? part : part.slug;
+  const side = typeof part === 'string' ? null : part.side;
+
+  const baseLabel = labels[slug] || slug;
+
+  if (side === 'left') return `Sol ${baseLabel}`;
+  if (side === 'right') return `Sağ ${baseLabel}`;
+
+  return baseLabel;
+};
+
+ 
 
   const weatherCodeToText = (code) => {
     if (code === 0) return 'Güneşli';
@@ -270,6 +301,8 @@ export default function SymptomsScreen() {
     }
   };
 
+ 
+
   const saveSymptomsToStorage = async (records) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(records));
@@ -378,112 +411,7 @@ export default function SymptomsScreen() {
     setFilteredSymptoms(savedSymptoms);
   };
 
-  const renderFrontBody = () => {
-    return (
-      <View style={styles.bodyContainer}>
-        <TouchableOpacity
-          style={[styles.head, { backgroundColor: getColor('head-front') }]}
-          onPress={() => togglePart('head-front')}
-        />
-
-        <View style={styles.shoulderRow}>
-          <TouchableOpacity
-            style={[styles.armUpperLeft, { backgroundColor: getColor('left-arm-front') }]}
-            onPress={() => togglePart('left-arm-front')}
-          />
-          <TouchableOpacity
-            style={[styles.chest, { backgroundColor: getColor('chest') }]}
-            onPress={() => togglePart('chest')}
-          />
-          <TouchableOpacity
-            style={[styles.armUpperRight, { backgroundColor: getColor('right-arm-front') }]}
-            onPress={() => togglePart('right-arm-front')}
-          />
-        </View>
-
-        <View style={styles.middleRow}>
-          <TouchableOpacity
-            style={[styles.armLowerLeft, { backgroundColor: getColor('left-arm-front') }]}
-            onPress={() => togglePart('left-arm-front')}
-          />
-          <TouchableOpacity
-            style={[styles.abdomen, { backgroundColor: getColor('abdomen') }]}
-            onPress={() => togglePart('abdomen')}
-          />
-          <TouchableOpacity
-            style={[styles.armLowerRight, { backgroundColor: getColor('right-arm-front') }]}
-            onPress={() => togglePart('right-arm-front')}
-          />
-        </View>
-
-       
-
-        <View style={styles.legsRow}>
-          <TouchableOpacity
-            style={[styles.legLeftNew, { backgroundColor: getColor('left-leg-front') }]}
-            onPress={() => togglePart('left-leg-front')}
-          />
-          <TouchableOpacity
-            style={[styles.legRightNew, { backgroundColor: getColor('right-leg-front') }]}
-            onPress={() => togglePart('right-leg-front')}
-          />
-        </View>
-      </View>
-    );
-  };
-
-  const renderBackBody = () => {
-    return (
-      <View style={styles.bodyContainer}>
-        <TouchableOpacity
-          style={[styles.head, { backgroundColor: getColor('head-back') }]}
-          onPress={() => togglePart('head-back')}
-        />
-
-        <View style={styles.shoulderRow}>
-          <TouchableOpacity
-            style={[styles.armUpperLeft, { backgroundColor: getColor('left-arm-back') }]}
-            onPress={() => togglePart('left-arm-back')}
-          />
-          <TouchableOpacity
-            style={[styles.upperBack, { backgroundColor: getColor('upper-back') }]}
-            onPress={() => togglePart('upper-back')}
-          />
-          <TouchableOpacity
-            style={[styles.armUpperRight, { backgroundColor: getColor('right-arm-back') }]}
-            onPress={() => togglePart('right-arm-back')}
-          />
-        </View>
-
-        <View style={styles.middleRow}>
-          <TouchableOpacity
-            style={[styles.armLowerLeft, { backgroundColor: getColor('left-arm-back') }]}
-            onPress={() => togglePart('left-arm-back')}
-          />
-          <TouchableOpacity
-            style={[styles.lowerBack, { backgroundColor: getColor('lower-back') }]}
-            onPress={() => togglePart('lower-back')}
-          />
-          <TouchableOpacity
-            style={[styles.armLowerRight, { backgroundColor: getColor('right-arm-back') }]}
-            onPress={() => togglePart('right-arm-back')}
-          />
-        </View>
-
-
-        <View style={styles.legsRow}>
-          <TouchableOpacity
-            style={[styles.legLeftNew, { backgroundColor: getColor('left-leg-back') }]}
-            onPress={() => togglePart('left-leg-back')}
-          />
-          <TouchableOpacity
-            style={[styles.legRightNew, { backgroundColor: getColor('right-leg-back') }]}
-            onPress={() => togglePart('right-leg-back')}
-          />
-        </View>
-      </View>
-    );
-  };
+  
 
   const renderFormTab = () => {
     return (
@@ -513,6 +441,7 @@ export default function SymptomsScreen() {
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Vücut Bölgesi Seçimi</Text>
+          
 
           <View style={styles.toggleRow}>
             <TouchableOpacity
@@ -550,24 +479,44 @@ export default function SymptomsScreen() {
             </TouchableOpacity>
           </View>
 
-          {bodyView === 'front' ? renderFrontBody() : renderBackBody()}
+         
 
-          <View style={styles.selectedBox}>
-            <Text style={styles.selectedTitle}>Seçilen Bölgeler</Text>
+         <View style={styles.bodyWrapper}>
+  <Body
+    side={bodyView}
+    gender={userGender}
+    scale={0.9}
+    border="#D9C7CC"
+    data={selectedParts.map((part) => ({
+      slug: part.slug,
+      intensity: painLevel > 7 ? 4 : painLevel > 4 ? 3 : 2,
+      ...(part.side ? { side: part.side } : {}),
+    }))}
+    onBodyPartPress={(bodyPart, side) => togglePart(bodyPart.slug, side)}
+    colors={['#FCE4EC', '#F8BBD0', '#F48FB1', '#8B2635']}
+  />
+</View>
 
-            {selectedParts.length === 0 ? (
-              <Text style={styles.emptyText}>Henüz vücut bölgesi seçilmedi.</Text>
-            ) : (
-              <View style={styles.tagsContainer}>
-                {selectedParts.map((part) => (
-                  <View key={part} style={styles.tag}>
-                    <Text style={styles.tagText}>{getPartLabel(part)}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-        </View>
+<View style={styles.selectedBox}>
+  <Text style={styles.selectedTitle}>Seçilen Bölgeler</Text>
+
+  {selectedParts.length === 0 ? (
+    <Text style={styles.emptyText}>Henüz vücut bölgesi seçilmedi.</Text>
+  ) : (
+    <View style={styles.tagsContainer}>
+      {selectedParts.map((part, index) => (
+  <View key={`${part.slug}-${part.side || 'center'}-${index}`} style={styles.tag}>
+    <Text style={styles.tagText}>{getPartLabel(part)}</Text>
+  </View>
+      ))}
+    </View>
+  )}
+</View>
+<TouchableOpacity onPress={() => setSelectedParts([])}>
+    <Text style={styles.clearSelectionText}>Seçimleri Temizle</Text>
+  </TouchableOpacity>
+</View>
+
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Ağrı Şiddeti: {painLevel}</Text>
@@ -908,7 +857,7 @@ export default function SymptomsScreen() {
     <Text style={styles.navText}>Tedaviler</Text>
   </TouchableOpacity>
 
-  <TouchableOpacity onPress={() => router.push('/analysis')} style={styles.navItem}>
+  <TouchableOpacity onPress={() => router.push('/fototerapi')} style={styles.navItem}>
     <BarChart3 size={22} color="#b9a7ab" />
     <Text style={styles.navText}>Fototerapi Takibi</Text>
   </TouchableOpacity>
@@ -1145,139 +1094,6 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
 
-  bodyContainer: {
-    width: 240,
-    alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingVertical: 10,
-  },
-
-  head: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    marginBottom: 8,
-  },
-
-  shoulderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-  },
-
-  middleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    marginTop: -2,
-  },
-
-  chest: {
-    width: 86,
-    height: 82,
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
-  },
-
-  abdomen: {
-    width: 72,
-    height: 72,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-  },
-
-  upperBack: {
-    width: 88,
-    height: 84,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
-  },
-
-  lowerBack: {
-    width: 74,
-    height: 70,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-
-  armUpperLeft: {
-    width: 24,
-    height: 74,
-    borderRadius: 14,
-    marginRight: 6,
-    marginTop: 6,
-  },
-
-  armUpperRight: {
-    width: 24,
-    height: 74,
-    borderRadius: 14,
-    marginLeft: 6,
-    marginTop: 6,
-  },
-
-  armLowerLeft: {
-    width: 22,
-    height: 72,
-    borderRadius: 14,
-    marginRight: 10,
-    marginTop: 2,
-  },
-
-  armLowerRight: {
-    width: 22,
-    height: 72,
-    borderRadius: 14,
-    marginLeft: 10,
-    marginTop: 2,
-  },
-
-  hipRow: {
-    marginTop: 2,
-    marginBottom: 4,
-    alignItems: 'center',
-  },
-
-  hip: {
-    width: 62,
-    height: 22,
-    backgroundColor: '#D9D9D9',
-    borderRadius: 12,
-  },
-
-  legsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 14,
-  },
-
-  legLeftNew: {
-    width: 30,
-    height: 120,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
-  },
-
-  legRightNew: {
-    width: 30,
-    height: 120,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
-  },
-
   selectedBox: {
     marginTop: 8,
     backgroundColor: '#fff8f9',
@@ -1301,6 +1117,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
+
+  bodyWrapper: {
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: 420,
+  paddingVertical: 10,
+},
 
   tag: {
     backgroundColor: '#8B2635',
@@ -1498,5 +1321,11 @@ const styles = StyleSheet.create({
   borderWidth: 1,
   borderColor: '#ebd4d9',
   color: '#333',
+},
+clearSelectionText: {
+  color: '#8B2635',
+  fontWeight: '600',
+  marginTop: 10,
+  textAlign: 'center',
 },
 });

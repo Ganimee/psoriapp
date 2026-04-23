@@ -665,7 +665,7 @@ export default function FototerapiScreen() {
           onPress={() => router.push('/symptoms')}
         >
           <Activity size={22} color="#b9a7ab" />
-          <Text style={styles.navText}>Semptom</Text>
+          <Text style={styles.navText}>Semptom Takibi</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
