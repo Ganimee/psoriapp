@@ -4,12 +4,18 @@ import {
   Activity,
   BarChart3,
   Calendar,
+  CheckCircle2,
+  Clock,
   History,
   Home,
+  Info,
   LayoutDashboard,
   Pill,
   Plus,
+  Target,
+  Trophy,
   User,
+  Zap
 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
@@ -340,100 +346,160 @@ export default function FototerapiScreen() {
     setActiveTab('dashboard');
   };
 
-  const renderDashboard = () => (
+  const renderDashboard = () => {
+  const currentSession = activePlanSessions.find((s) => !s.isCompleted);
+
+  return (
     <View>
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Aktif Tedavi</Text>
-        <Text style={styles.mainTitle}>
-          {activePlan ? activePlan.name : 'Aktif plan yok'}
-        </Text>
-
-        <Text style={styles.infoText}>
-          Başlangıç: {activePlan ? activePlan.startDate : '-'}
-        </Text>
-        <Text style={styles.infoText}>Seans Sayısı: {stats.total}</Text>
-        <Text style={styles.infoText}>Tamamlanan: {stats.completed}</Text>
-        <Text style={styles.infoText}>Kalan: {stats.pending}</Text>
-        <Text style={styles.infoText}>
-   
-        </Text>
-
-        <View style={styles.progressSection}>
-          <View style={styles.progressHeader}>
-            <Text style={styles.cardTitle}>Katılım</Text>
-            <Text style={styles.percentBadge}>%{stats.adherence}</Text>
+      <View style={styles.statsGrid}>
+        <View style={styles.statCard}>
+          <View style={styles.statIconBox}>
+            <Target size={18} color="#8B2635" />
           </View>
+          <Text style={styles.statLabel}>İlerleme</Text>
+          <Text style={styles.statValue}>%{stats.progress}</Text>
+        </View>
 
-          <Text style={styles.progressText}>
-            {stats.completed} / {stats.total} seans tamamlandı
+        <View style={styles.statCard}>
+          <View style={styles.statIconBoxOrange}>
+            <Trophy size={18} color="#f97316" />
+          </View>
+          <Text style={styles.statLabel}>Tamamlanan</Text>
+          <Text style={styles.statValue}>
+            {stats.completed}
+            <Text style={styles.statMuted}> / {stats.total}</Text>
           </Text>
-
-          <View style={styles.progressBarBg}>
-            <View
-              style={[styles.progressBar, { width: `${stats.progress}%` }]}
-            />
-          </View>
         </View>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Seanslar</Text>
+      <View style={styles.activeSessionCard}>
+        <View style={styles.activeSessionHeader}>
+          <View style={styles.activeDotRow}>
+            <View style={styles.greenDot} />
+            <Text style={styles.activeLabel}>Sıradaki Adım</Text>
+          </View>
+          <Clock size={17} color="#8B2635" />
+        </View>
 
-        {activePlanSessions.length === 0 ? (
-          <Text style={styles.emptyText}>Aktif tedaviye ait seans yok.</Text>
+        <Text style={styles.activeSessionTitle}>
+          {currentSession
+            ? `Seans #${currentSession.sessionNo}`
+            : 'Tüm Seanslar Tamamlandı'}
+        </Text>
+
+        <Text style={styles.activeSessionSub}>
+          {currentSession
+            ? `${currentSession.scheduledDate} • Hazırlan`
+            : 'Aktif plandaki tüm seanslar tamamlandı'}
+        </Text>
+
+        {currentSession ? (
+          <TouchableOpacity
+            style={styles.completeBigButton}
+            onPress={() => completeSession(currentSession.id)}
+          >
+            <Zap size={18} color="#fff" fill="#fff" />
+            <Text style={styles.completeBigButtonText}>SEANSI TAMAMLA</Text>
+          </TouchableOpacity>
         ) : (
-          activePlanSessions.map((session) => (
-            <View key={session.id} style={styles.sessionRow}>
-              <View style={styles.sessionInfo}>
-                <Text style={styles.sessionTitle}>{session.sessionNo}. Seans</Text>
-                <Text style={styles.sessionSub}>
-                  Planlanan Tarih: {session.scheduledDate}
-                </Text>
-
-                {session.isCompleted ? (
-                  <>
-                    <Text style={styles.completedDateText}>
-                      Tamamlanma Tarihi: {session.completedAt}
-                    </Text>
-
-                    <Text style={styles.durationLabel}>Seans Süresi (sn)</Text>
-                    <TextInput
-                      style={styles.durationInput}
-                      value={String(session.duration)}
-                      onChangeText={(text) =>
-                        updateSessionDuration(session.id, text)
-                      }
-                      keyboardType="numeric"
-                      placeholder="Örn: 45"
-                      placeholderTextColor="#b9a7ab"
-                    />
-                  </>
-                ) : (
-                  <Text style={styles.pendingText}>Durum: Bekliyor</Text>
-                )}
-              </View>
-
-              {!session.isCompleted ? (
-                <TouchableOpacity
-                  style={styles.completeButton}
-                  onPress={() => completeSession(session.id)}
-                >
-                  <Text style={styles.completeButtonText}>Seans Tamamlandı</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.undoButton}
-                  onPress={() => undoSession(session.id)}
-                >
-                  <Text style={styles.undoButtonText}>Geri Al</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          ))
+          <View style={styles.completedAllBox}>
+            <CheckCircle2 size={20} color="#1f9d55" />
+            <Text style={styles.completedAllText}>Tedavi planı tamamlandı</Text>
+          </View>
         )}
+      </View>
+
+      <View style={styles.roadSection}>
+        <View style={styles.roadHeader}>
+          <Text style={styles.roadTitle}>Tedavi Yolun</Text>
+          <Text style={styles.roadAction}>
+            {stats.completed} / {stats.total}
+          </Text>
+        </View>
+
+        <View style={styles.sessionMatrix}>
+          {activePlanSessions.map((session) => {
+            const isCompleted = session.isCompleted;
+            const isActive = currentSession?.id === session.id;
+
+            return (
+              <TouchableOpacity
+                key={session.id}
+                style={styles.matrixItem}
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (session.isCompleted) {
+                    undoSession(session.id);
+                  } else {
+                    completeSession(session.id);
+                  }
+                }}
+              >
+                <View
+                  style={[
+                    styles.matrixCircle,
+                    isCompleted && styles.matrixCircleCompleted,
+                    isActive && styles.matrixCircleActive,
+                  ]}
+                >
+                  {isCompleted ? (
+                    <CheckCircle2 size={24} color="#1f9d55" />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.matrixNumber,
+                        isActive && styles.matrixNumberActive,
+                      ]}
+                    >
+                      {session.sessionNo}
+                    </Text>
+                  )}
+                </View>
+
+                <Text
+                  style={[
+                    styles.matrixDate,
+                    isActive && styles.matrixDateActive,
+                  ]}
+                >
+                  {session.scheduledDate.slice(5)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={styles.progressCardNew}>
+        <View style={styles.progressHeader}>
+          <Text style={styles.cardTitle}>Katılım Durumu</Text>
+          <Text style={styles.percentBadge}>%{stats.adherence}</Text>
+        </View>
+
+        <Text style={styles.progressText}>
+          {stats.completed} / {stats.total} seans tamamlandı
+        </Text>
+
+        <View style={styles.progressBarBg}>
+          <View style={[styles.progressBar, { width: `${stats.progress}%` }]} />
+        </View>
+      </View>
+
+      <View style={styles.tipCard}>
+        <View style={styles.tipIconBox}>
+          <Info size={20} color="#fff" />
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <Text style={styles.tipLabel}>Günün İpucu</Text>
+          <Text style={styles.tipText}>
+            Seans sonrası nemlendirici kullanımı cilt bariyerini güçlendirebilir.
+          </Text>
+        </View>
       </View>
     </View>
   );
+};
 
   const renderHistory = () => (
     <View style={styles.card}>
@@ -496,9 +562,7 @@ export default function FototerapiScreen() {
               <Text style={styles.historySub}>
                 Tamamlanma Tarihi: {session.completedAt}
               </Text>
-              <Text style={styles.historySub}>
-                Süre: {session.duration ? `${session.duration} sn` : 'Girilmedi'}
-              </Text>
+              
             </View>
 
             <View style={styles.statusBadge}>
@@ -565,12 +629,7 @@ export default function FototerapiScreen() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Fototerapi Takibi</Text>
-          <Text style={styles.subtitle}>
-            Aktif tedavini ve seans geçmişini yönet
-          </Text>
-        </View>
+        
 
         <View style={styles.topTabs}>
           <TouchableOpacity
@@ -673,7 +732,7 @@ export default function FototerapiScreen() {
           onPress={() => router.push('/treatment')}
         >
           <Pill size={22} color="#b9a7ab" />
-          <Text style={styles.navText}>Tedavi</Text>
+          <Text style={styles.navText}>Tedaviler</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem}>
@@ -703,6 +762,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingBottom: 110,
+    paddingTop: 80,
   },
 
   header: {
@@ -731,15 +791,7 @@ const styles = StyleSheet.create({
   },
 
   topTabButton: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    marginHorizontal: 4,
+   c
   },
 
   topTabButtonActive: {
@@ -1080,4 +1132,269 @@ const styles = StyleSheet.create({
     color: '#b9a7ab',
     textAlign: 'center',
   },
+  statsGrid: {
+  flexDirection: 'row',
+  paddingHorizontal: 16,
+  gap: 12,
+  marginBottom: 16,
+},
+
+statCard: {
+  flex: 1,
+  backgroundColor: '#fff',
+  borderRadius: 28,
+  padding: 16,
+  borderWidth: 1,
+  borderColor: '#f8e7eb',
+},
+
+statIconBox: {
+  width: 36,
+  height: 36,
+  borderRadius: 14,
+  backgroundColor: '#FFF5F6',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 12,
+},
+
+statIconBoxOrange: {
+  width: 36,
+  height: 36,
+  borderRadius: 14,
+  backgroundColor: '#fff7ed',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 12,
+},
+
+statLabel: {
+  fontSize: 10,
+  fontWeight: '800',
+  color: '#aaa',
+  textTransform: 'uppercase',
+},
+
+statValue: {
+  fontSize: 22,
+  fontWeight: '800',
+  color: '#8B2635',
+  marginTop: 4,
+},
+
+statMuted: {
+  fontSize: 14,
+  color: '#bbb',
+},
+
+activeSessionCard: {
+  backgroundColor: '#fff',
+  marginHorizontal: 16,
+  marginBottom: 16,
+  borderRadius: 32,
+  padding: 22,
+  borderWidth: 1,
+  borderColor: '#f8e7eb',
+},
+
+activeSessionHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 14,
+},
+
+activeDotRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+greenDot: {
+  width: 8,
+  height: 8,
+  borderRadius: 8,
+  backgroundColor: '#22c55e',
+  marginRight: 8,
+},
+
+activeLabel: {
+  fontSize: 10,
+  fontWeight: '800',
+  color: '#aaa',
+  textTransform: 'uppercase',
+  letterSpacing: 1,
+},
+
+activeSessionTitle: {
+  fontSize: 24,
+  fontWeight: '800',
+  color: '#222',
+  marginBottom: 4,
+},
+
+activeSessionSub: {
+  fontSize: 12,
+  color: '#999',
+  fontWeight: '600',
+  marginBottom: 18,
+},
+
+completeBigButton: {
+  backgroundColor: '#8B2635',
+  borderRadius: 18,
+  paddingVertical: 15,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+  gap: 10,
+},
+
+completeBigButtonText: {
+  color: '#fff',
+  fontSize: 12,
+  fontWeight: '800',
+},
+
+completedAllBox: {
+  backgroundColor: '#e8f7ee',
+  borderRadius: 16,
+  paddingVertical: 14,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+  gap: 8,
+},
+
+completedAllText: {
+  color: '#1f9d55',
+  fontWeight: '800',
+  fontSize: 13,
+},
+
+roadSection: {
+  marginHorizontal: 16,
+  marginBottom: 16,
+},
+
+roadHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  paddingHorizontal: 6,
+  marginBottom: 10,
+},
+
+roadTitle: {
+  fontSize: 11,
+  fontWeight: '800',
+  color: '#aaa',
+  textTransform: 'uppercase',
+  letterSpacing: 1.5,
+},
+
+roadAction: {
+  fontSize: 11,
+  fontWeight: '800',
+  color: '#8B2635',
+},
+
+sessionMatrix: {
+  backgroundColor: '#fff',
+  borderRadius: 32,
+  padding: 18,
+  borderWidth: 1,
+  borderColor: '#f8e7eb',
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  justifyContent: 'space-between',
+},
+
+matrixItem: {
+  width: '30%',
+  alignItems: 'center',
+  marginBottom: 16,
+},
+
+matrixCircle: {
+  width: 54,
+  height: 54,
+  borderRadius: 18,
+  backgroundColor: '#f8f8f8',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 2,
+  borderColor: 'transparent',
+},
+
+matrixCircleCompleted: {
+  backgroundColor: '#e8f7ee',
+  borderColor: '#d1f0dc',
+},
+
+matrixCircleActive: {
+  backgroundColor: '#FFF5F6',
+  borderColor: '#8B2635',
+},
+
+matrixNumber: {
+  fontSize: 17,
+  fontWeight: '800',
+  color: '#bbb',
+},
+
+matrixNumberActive: {
+  color: '#8B2635',
+},
+
+matrixDate: {
+  marginTop: 7,
+  fontSize: 9,
+  fontWeight: '700',
+  color: '#aaa',
+},
+
+matrixDateActive: {
+  color: '#8B2635',
+},
+
+progressCardNew: {
+  backgroundColor: '#fff',
+  marginHorizontal: 16,
+  marginBottom: 16,
+  padding: 18,
+  borderRadius: 24,
+},
+
+tipCard: {
+  backgroundColor: '#8B2635',
+  marginHorizontal: 16,
+  marginBottom: 16,
+  borderRadius: 26,
+  padding: 18,
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 14,
+},
+
+tipIconBox: {
+  width: 42,
+  height: 42,
+  borderRadius: 16,
+  backgroundColor: 'rgba(255,255,255,0.18)',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+tipLabel: {
+  fontSize: 10,
+  fontWeight: '800',
+  color: 'rgba(255,255,255,0.6)',
+  textTransform: 'uppercase',
+},
+
+tipText: {
+  color: '#fff',
+  fontSize: 12,
+  fontWeight: '700',
+  lineHeight: 17,
+},
 });

@@ -4,8 +4,8 @@ import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import Body from 'react-native-body-highlighter';
+import { useEffect, useMemo, useState } from 'react';
+
 import {
   Alert,
   Image,
@@ -17,17 +17,25 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Body from 'react-native-body-highlighter';
 
 import {
   Activity,
+  AlertCircle,
+  BarChart2,
   BarChart3,
   CalendarDays,
   Camera,
+  ClipboardList,
   Home,
   Image as ImageIcon,
+  Minus,
   Pill,
+  PlusSquare,
   Save,
   Trash2,
+  TrendingDown,
+  TrendingUp,
   User,
 } from 'lucide-react-native';
 
@@ -36,6 +44,8 @@ const STORAGE_KEY = 'symptom_records_v1';
 export default function SymptomsScreen() {
   const router = useRouter();
 
+  
+  const [analysisRange, setAnalysisRange] = useState('30');
   const [activeTab, setActiveTab] = useState('form');
 
   const [selectedParts, setSelectedParts] = useState([]);
@@ -141,6 +151,7 @@ const loadUserGender = async () => {
     gluteal: 'Kalça',
     hamstring: 'Arka Üst Bacak',
     trapezius: 'Ense / Omuz Üstü',
+    hair: 'Saç',
   };
 
   const slug = typeof part === 'string' ? part : part.slug;
@@ -322,6 +333,7 @@ const loadUserGender = async () => {
     setSelectedImage(null);
     setSelectedDate(new Date());
     setBodyView('front');
+    setNote('');
   };
 
   const handleSave = async () => {
@@ -410,6 +422,77 @@ const loadUserGender = async () => {
     setFilterEndDate(null);
     setFilteredSymptoms(savedSymptoms);
   };
+
+  const analysisData = useMemo(() => {
+  if (savedSymptoms.length === 0) return null;
+
+  const currentRange = Number(analysisRange) || 1;
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - currentRange);
+  cutoffDate.setHours(0, 0, 0, 0);
+
+  const filtered = savedSymptoms.filter(
+    (item) => new Date(item.selectedDate) >= cutoffDate
+  );
+
+  if (filtered.length === 0) return { empty: true };
+
+  const sorted = [...filtered].sort(
+    (a, b) => new Date(b.selectedDate) - new Date(a.selectedDate)
+  );
+
+  const latest = sorted[0];
+  const previous = sorted.length > 1 ? sorted[1] : null;
+
+  const painChange = previous ? latest.painLevel - previous.painLevel : 0;
+  const itchChange = previous ? latest.itchLevel - previous.itchLevel : 0;
+
+  const avgPain = (
+    sorted.reduce((acc, item) => acc + Number(item.painLevel || 0), 0) /
+    sorted.length
+  ).toFixed(1);
+
+  const avgItch = (
+    sorted.reduce((acc, item) => acc + Number(item.itchLevel || 0), 0) /
+    sorted.length
+  ).toFixed(1);
+
+  const partCounts = {};
+
+  sorted.forEach((record) => {
+    record.selectedParts?.forEach((part) => {
+      const key = `${part.slug}-${part.side || 'center'}`;
+      partCounts[key] = (partCounts[key] || 0) + 1;
+    });
+  });
+
+  const topParts = Object.entries(partCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([key]) => {
+      const lastDashIndex = key.lastIndexOf('-');
+      const slug = key.slice(0, lastDashIndex);
+      const side = key.slice(lastDashIndex + 1);
+      return getPartLabel({
+        slug,
+        side: side === 'center' ? null : side,
+      });
+    });
+
+  const chartData = sorted.slice(0, 10).reverse();
+
+  return {
+    latest,
+    previous,
+    painChange,
+    itchChange,
+    avgPain,
+    avgItch,
+    topParts,
+    chartData,
+  };
+}, [savedSymptoms, analysisRange]);
 
   
 
@@ -779,6 +862,7 @@ const loadUserGender = async () => {
   </Text>
 </View>
                 
+        
 
             
 
@@ -795,48 +879,266 @@ const loadUserGender = async () => {
     );
   };
 
+  const renderAnalysisTab = () => {
+  const currentRange = Number(analysisRange) || 1;
+
+  if (!analysisData) {
+    return (
+      <View style={styles.card}>
+        <Text style={styles.emptyText}>
+          Analiz için henüz kayıt yok. Önce semptom eklemelisin.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Analiz Aralığı</Text>
+
+        <View style={styles.analysisRangeRow}>
+          <Text style={styles.analysisRangeText}>Son</Text>
+
+          <TextInput
+            style={styles.analysisRangeInput}
+            value={analysisRange}
+            onChangeText={(text) =>
+              setAnalysisRange(text.replace(/[^0-9]/g, ''))
+            }
+            keyboardType="numeric"
+            placeholder="30"
+            placeholderTextColor="#b9a7ab"
+          />
+
+          <Text style={styles.analysisRangeText}>Gün</Text>
+        </View>
+      </View>
+
+      {analysisData.empty ? (
+        <View style={styles.card}>
+          <Text style={styles.emptyText}>
+            Seçili {currentRange} günlük aralıkta kayıt bulunamadı.
+          </Text>
+        </View>
+      ) : (
+        <>
+          <View style={styles.analysisStatsGrid}>
+            <View style={styles.analysisStatCard}>
+              <Text style={styles.analysisStatLabel}>
+                SON {currentRange} GÜN AĞRI
+              </Text>
+              <Text style={styles.analysisPainValue}>
+                {analysisData.avgPain}
+              </Text>
+              <Text style={styles.analysisStatSub}>/ 10</Text>
+            </View>
+
+            <View style={styles.analysisStatCard}>
+              <Text style={styles.analysisStatLabel}>
+                SON {currentRange} GÜN KAŞINTI
+              </Text>
+              <Text style={styles.analysisItchValue}>
+                {analysisData.avgItch}
+              </Text>
+              <Text style={styles.analysisStatSub}>/ 10</Text>
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Önceki Kayda Göre Değişim</Text>
+
+            <View style={styles.changeBox}>
+              <Text style={styles.changeText}>
+                {analysisData.painChange > 0
+                  ? `Ağrı önceki kayda göre arttı (+${analysisData.painChange})`
+                  : analysisData.painChange < 0
+                    ? `Ağrı önceki kayda göre azaldı (${analysisData.painChange})`
+                    : 'Ağrı önceki kayda göre aynı kaldı'}
+              </Text>
+
+              {analysisData.painChange > 0 ? (
+                <TrendingUp size={20} color="#ef4444" />
+              ) : analysisData.painChange < 0 ? (
+                <TrendingDown size={20} color="#22c55e" />
+              ) : (
+                <Minus size={20} color="#999" />
+              )}
+            </View>
+
+            <View style={styles.changeBoxPink}>
+              <Text style={styles.changeText}>
+                {analysisData.itchChange > 0
+                  ? `Kaşıntı önceki kayda göre arttı (+${analysisData.itchChange})`
+                  : analysisData.itchChange < 0
+                    ? `Kaşıntı önceki kayda göre azaldı (${analysisData.itchChange})`
+                    : 'Kaşıntı önceki kayda göre aynı kaldı'}
+              </Text>
+
+              {analysisData.itchChange > 0 ? (
+                <TrendingUp size={20} color="#ef4444" />
+              ) : analysisData.itchChange < 0 ? (
+                <TrendingDown size={20} color="#22c55e" />
+              ) : (
+                <Minus size={20} color="#999" />
+              )}
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.analysisTitleRow}>
+              <BarChart2 size={18} color="#8B2635" />
+              <Text style={styles.sectionTitle}>
+                Trend Grafiği
+              </Text>
+            </View>
+
+            <Text style={styles.helperText}>
+              Son {analysisData.chartData.length} kayıt gösteriliyor.
+            </Text>
+
+            <View style={styles.chartContainer}>
+              {analysisData.chartData.map((item) => (
+                <View key={item.id} style={styles.chartItem}>
+                  <View style={styles.chartBars}>
+                    <View
+                      style={[
+                        styles.painBar,
+                        { height: `${Math.max(item.painLevel * 10, 5)}%` },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.itchBar,
+                        { height: `${Math.max(item.itchLevel * 10, 5)}%` },
+                      ]}
+                    />
+                  </View>
+
+                  <Text style={styles.chartDate}>
+                    {new Date(item.selectedDate).getDate()}/
+                    {new Date(item.selectedDate).getMonth() + 1}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.legendRow}>
+              <View style={styles.legendItem}>
+                <View style={styles.painLegend} />
+                <Text style={styles.legendText}>Ağrı</Text>
+              </View>
+
+              <View style={styles.legendItem}>
+                <View style={styles.itchLegend} />
+                <Text style={styles.legendText}>Kaşıntı</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.analysisTitleRow}>
+              <AlertCircle size={18} color="#8B2635" />
+              <Text style={styles.sectionTitle}>
+                En Yoğun Şikayet Bölgeleri
+              </Text>
+            </View>
+
+            <Text style={styles.helperText}>
+              Son {currentRange} gün içinde en çok seçilen bölgeler:
+            </Text>
+
+            {analysisData.topParts.length === 0 ? (
+              <Text style={styles.emptyText}>Bölge verisi bulunamadı.</Text>
+            ) : (
+              <View style={styles.tagsContainer}>
+                {analysisData.topParts.map((part, index) => (
+                  <View key={`${part}-${index}`} style={styles.analysisTag}>
+                    <Text style={styles.analysisTagText}>{part}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </>
+      )}
+    </>
+  );
+};
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 130 }}>
-        <Text style={styles.pageTitle}>Semptom Takibi</Text>
+       
 
         <View style={styles.topTabContainer}>
-          <TouchableOpacity
-            style={[
-              styles.topTabButton,
-              activeTab === 'form' && styles.topTabButtonActive,
-            ]}
-            onPress={() => setActiveTab('form')}
-          >
-            <Text
-              style={[
-                styles.topTabButtonText,
-                activeTab === 'form' && styles.topTabButtonTextActive,
-              ]}
-            >
-              Semptom Ekle
-            </Text>
-          </TouchableOpacity>
+  <TouchableOpacity
+    style={[
+      styles.topTabCard,
+      activeTab === 'form' && styles.topTabCardActive,
+    ]}
+    onPress={() => setActiveTab('form')}
+  >
+    <PlusSquare
+      size={20}
+      color={activeTab === 'form' ? '#fff' : '#8B2635'}
+    />
+    <Text
+      style={[
+        styles.topTabCardText,
+        activeTab === 'form' && styles.topTabCardTextActive,
+      ]}
+    >
+      Ekle
+    </Text>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.topTabButton,
-              activeTab === 'records' && styles.topTabButtonActive,
-            ]}
-            onPress={() => setActiveTab('records')}
-          >
-            <Text
-              style={[
-                styles.topTabButtonText,
-                activeTab === 'records' && styles.topTabButtonTextActive,
-              ]}
-            >
-              Kayıtlı Semptomlar
-            </Text>
-          </TouchableOpacity>
-        </View>
+  <TouchableOpacity
+    style={[
+      styles.topTabCard,
+      activeTab === 'records' && styles.topTabCardActive,
+    ]}
+    onPress={() => setActiveTab('records')}
+  >
+    <ClipboardList
+      size={20}
+      color={activeTab === 'records' ? '#fff' : '#8B2635'}
+    />
+    <Text
+      style={[
+        styles.topTabCardText,
+        activeTab === 'records' && styles.topTabCardTextActive,
+      ]}
+    >
+      Kayıtlı
+    </Text>
+  </TouchableOpacity>
 
-        {activeTab === 'form' ? renderFormTab() : renderRecordsTab()}
+  <TouchableOpacity
+    style={[
+      styles.topTabCard,
+      activeTab === 'analysis' && styles.topTabCardActive,
+    ]}
+    onPress={() => setActiveTab('analysis')}
+  >
+    <BarChart2
+      size={20}
+      color={activeTab === 'analysis' ? '#fff' : '#8B2635'}
+    />
+    <Text
+      style={[
+        styles.topTabCardText,
+        activeTab === 'analysis' && styles.topTabCardTextActive,
+      ]}
+    >
+      Analiz
+    </Text>
+  </TouchableOpacity>
+</View>
+
+        {activeTab === 'form' && renderFormTab()}
+        {activeTab === 'records' && renderRecordsTab()}
+        {activeTab === 'analysis' && renderAnalysisTab()}
       </ScrollView>
 
      <View style={styles.bottomNav}>
@@ -874,6 +1176,7 @@ const loadUserGender = async () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 70,
     backgroundColor: '#FFF5F6',
   },
 
@@ -964,21 +1267,22 @@ const styles = StyleSheet.create({
 
   filterRow: {
     flexDirection: 'row',
-    gap: 10,
     marginBottom: 12,
   },
 
-  filterDateButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff8f9',
-    borderWidth: 1,
-    borderColor: '#ebd4d9',
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-  },
+ filterDateButton: {
+  flex: 1,
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#fff8f9',
+  borderWidth: 1,
+  borderColor: '#ebd4d9',
+  borderRadius: 14,
+  paddingVertical: 12,
+  paddingHorizontal: 12,
+  marginHorizontal: 5,
+},
+
 
   filterDateText: {
     marginLeft: 8,
@@ -989,16 +1293,16 @@ const styles = StyleSheet.create({
 
   filterActionRow: {
     flexDirection: 'row',
-    gap: 10,
   },
 
   filterButton: {
-    flex: 1,
-    backgroundColor: '#8B2635',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
+   flex: 1,
+   backgroundColor: '#8B2635',
+   borderRadius: 12,
+   paddingVertical: 12,
+   alignItems: 'center',
+   marginRight: 5,
+},
 
   filterButtonText: {
     color: '#fff',
@@ -1006,14 +1310,15 @@ const styles = StyleSheet.create({
   },
 
   clearFilterButton: {
-    flex: 1,
-    backgroundColor: '#f8e8eb',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ebd4d9',
-  },
+   flex: 1,
+   backgroundColor: '#f8e8eb',
+   borderRadius: 12,
+   paddingVertical: 12,
+   alignItems: 'center',
+   borderWidth: 1,
+   borderColor: '#ebd4d9',
+   marginLeft: 5,
+},
 
   clearFilterButtonText: {
     color: '#8B2635',
@@ -1046,25 +1351,42 @@ const styles = StyleSheet.create({
 
   uploadButtonsRow: {
     flexDirection: 'row',
-    gap: 10,
     marginTop: 12,
   },
 
   uploadButton: {
-    flex: 1,
-    backgroundColor: '#8B2635',
-    borderRadius: 12,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+   flex: 1,
+   backgroundColor: '#8B2635',
+   borderRadius: 12,
+   paddingVertical: 12,
+  flexDirection: 'row',
+   justifyContent: 'center',
+   alignItems: 'center',
+   marginHorizontal: 5,
+},
 
   uploadButtonText: {
     color: '#fff',
     fontWeight: '600',
     marginLeft: 8,
   },
+
+  analysisTitleRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+legendRow: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  marginTop: 12,
+},
+
+legendItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginHorizontal: 9,
+},
 
   toggleRow: {
     flexDirection: 'row',
@@ -1327,5 +1649,220 @@ clearSelectionText: {
   fontWeight: '600',
   marginTop: 10,
   textAlign: 'center',
+},
+analysisRangeRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: '#f8e8eb',
+  borderRadius: 14,
+  paddingVertical: 10,
+  paddingHorizontal: 12,
+},
+
+analysisRangeText: {
+  color: '#8B2635',
+  fontSize: 14,
+  fontWeight: '700',
+},
+
+analysisRangeInput: {
+  width: 55,
+  height: 40,
+  backgroundColor: '#fff',
+  borderRadius: 12,
+  marginHorizontal: 10,
+  textAlign: 'center',
+  color: '#8B2635',
+  fontSize: 18,
+  fontWeight: '800',
+},
+
+analysisStatsGrid: {
+  flexDirection: 'row',
+  marginHorizontal: 12,
+  marginTop: 12,
+},
+
+analysisStatCard: {
+  flex: 1,
+  backgroundColor: '#fff',
+  borderRadius: 18,
+  padding: 16,
+  alignItems: 'center',
+  marginHorizontal: 5,
+},
+
+analysisStatLabel: {
+  fontSize: 10,
+  fontWeight: '800',
+  color: '#999',
+  textAlign: 'center',
+  marginBottom: 8,
+},
+
+analysisPainValue: {
+  fontSize: 32,
+  fontWeight: '900',
+  color: '#8B2635',
+},
+
+analysisItchValue: {
+  fontSize: 32,
+  fontWeight: '900',
+  color: '#D94F70',
+},
+
+analysisStatSub: {
+  fontSize: 12,
+  color: '#999',
+},
+
+changeBox: {
+  backgroundColor: '#fff1f2',
+  borderRadius: 14,
+  padding: 12,
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 10,
+},
+
+changeBoxPink: {
+  backgroundColor: '#fdf2f8',
+  borderRadius: 14,
+  padding: 12,
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+},
+
+changeText: {
+  flex: 1,
+  color: '#555',
+  fontSize: 13,
+  fontWeight: '600',
+  marginRight: 10,
+},
+
+
+chartContainer: {
+  height: 170,
+  flexDirection: 'row',
+  alignItems: 'flex-end',
+  justifyContent: 'space-between',
+  marginTop: 16,
+},
+
+chartItem: {
+  flex: 1,
+  alignItems: 'center',
+},
+
+chartBars: {
+  height: 120,
+  flexDirection: 'row',
+  alignItems: 'flex-end',
+  justifyContent: 'center',
+},
+
+painBar: {
+  width: 8,
+  backgroundColor: '#8B2635',
+  borderTopLeftRadius: 5,
+  borderTopRightRadius: 5,
+  marginRight: 2,
+},
+
+itchBar: {
+  width: 8,
+  backgroundColor: '#D94F70',
+  borderTopLeftRadius: 5,
+  borderTopRightRadius: 5,
+  marginLeft: 2,
+},
+
+chartDate: {
+  fontSize: 10,
+  color: '#999',
+  marginTop: 8,
+},
+
+
+
+legendItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+painLegend: {
+  width: 12,
+  height: 12,
+  backgroundColor: '#8B2635',
+  borderRadius: 3,
+  marginRight: 6,
+},
+
+itchLegend: {
+  width: 12,
+  height: 12,
+  backgroundColor: '#D94F70',
+  borderRadius: 3,
+  marginRight: 6,
+},
+
+legendText: {
+  fontSize: 12,
+  color: '#666',
+  fontWeight: '600',
+},
+
+analysisTag: {
+  backgroundColor: '#f8e8eb',
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 20,
+  marginRight: 8,
+  marginBottom: 8,
+},
+
+analysisTagText: {
+  color: '#8B2635',
+  fontSize: 13,
+  fontWeight: '700',
+},
+topTabContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginHorizontal: 12,
+  marginTop: 10,
+  marginBottom: 10,
+},
+
+topTabCard: {
+ flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    marginHorizontal: 4,
+},
+
+topTabCardActive: {
+  backgroundColor: '#8B2635',
+},
+
+topTabCardText: {
+  marginTop: 6,
+  fontSize: 11,
+  fontWeight: '700',
+  color: '#8B2635',
+},
+
+topTabCardTextActive: {
+  color: '#fff',
 },
 });

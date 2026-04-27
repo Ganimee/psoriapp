@@ -61,7 +61,7 @@ export default function TreatmentsScreen() {
     endDate: '',
   });
 
-  const treatmentTypes = ['İğne', 'Fototerapi', 'Krem', 'Hap'];
+  const treatmentTypes = ['İğne', 'Krem', 'Hap'];
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -162,7 +162,6 @@ export default function TreatmentsScreen() {
   const getIcon = (type) => {
     if (type === 'Hap') return <Pill size={20} color="#8B2635" />;
     if (type === 'Krem') return <ClipboardPlus size={20} color="#8B2635" />;
-    if (type === 'Fototerapi') return <SunMedium size={20} color="#8B2635" />;
     if (type === 'İğne') {
       return (
         <MaterialCommunityIcons
@@ -183,7 +182,7 @@ export default function TreatmentsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Tedavilerim</Text>
+       
       </View>
 
       <View style={styles.tabs}>
