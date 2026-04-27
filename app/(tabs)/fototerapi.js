@@ -45,6 +45,8 @@ export default function FototerapiScreen() {
     },
   ]);
 
+  
+
   const [sessions, setSessions] = useState([
     {
       id: 1,
@@ -791,7 +793,15 @@ const styles = StyleSheet.create({
   },
 
   topTabButton: {
-   c
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    marginHorizontal: 4,
   },
 
   topTabButtonActive: {

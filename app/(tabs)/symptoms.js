@@ -1356,7 +1356,7 @@ const styles = StyleSheet.create({
 
   uploadButton: {
    flex: 1,
-   backgroundColor: '#8B2635',
+   backgroundColor: '#bb6f6f',
    borderRadius: 12,
    paddingVertical: 12,
   flexDirection: 'row',
