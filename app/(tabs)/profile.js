@@ -725,6 +725,10 @@ export default function ProfileScreen() {
 
   const renderPasswordView = () => (
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
+       <TouchableOpacity style={styles.backButton} onPress={() => setView('main')}>
+      <Feather name="chevron-left" size={20} color="#8B2635" />
+      <Text style={styles.backButtonText}>Geri Dön</Text>
+    </TouchableOpacity>
       <Text style={[styles.title, { color: darkMode ? '#FFF' : '#8B2635' }]}>
         Şifre Değiştir
       </Text>
