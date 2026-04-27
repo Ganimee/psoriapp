@@ -10,6 +10,8 @@ import {
   View,
 } from 'react-native';
 
+import { useThemeCustom } from '../../context/ThemeContext';
+
 import { Feather } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
@@ -37,7 +39,9 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   const [view, setView] = useState('main');
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDark, toggleTheme } = useThemeCustom();
+  const darkMode = isDark;
+
   const [showPermissions, setShowPermissions] = useState(false);
   const [showMissions, setShowMissions] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
@@ -543,11 +547,12 @@ export default function ProfileScreen() {
         label="Koyu Mod"
         icon={<Moon size={18} color={darkMode ? '#FFF' : '#8B2635'} />}
         rightComponent={
-          <Switch
-            value={darkMode}
-            onValueChange={setDarkMode}
-            thumbColor={darkMode ? '#8B2635' : '#f4f3f4'}
-            trackColor={{ false: '#CCC', true: '#FAD2D8' }}
+         <Switch
+          value={darkMode}
+          onValueChange={toggleTheme}
+          thumbColor={darkMode ? '#8B2635' : '#f4f3f4'}
+          trackColor={{ false: '#CCC', true: '#FAD2D8' }}
+          
           />
         }
       />

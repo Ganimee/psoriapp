@@ -4,6 +4,7 @@ import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import { useThemeCustom } from '../../context/ThemeContext';//dark
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -43,6 +44,7 @@ const STORAGE_KEY = 'symptom_records_v1';
 
 export default function SymptomsScreen() {
   const router = useRouter();
+  const { isDark } = useThemeCustom();
 
   
   const [analysisRange, setAnalysisRange] = useState('30');
@@ -499,7 +501,12 @@ const loadUserGender = async () => {
   const renderFormTab = () => {
     return (
       <>
-        <View style={styles.card}>
+        <View
+  style={[
+    styles.card,
+    { backgroundColor: isDark ? '#1E1E1E' : '#FFF' }
+  ]}
+>
           <Text style={styles.sectionTitle}>Fotoğraf Ekle</Text>
 
         
@@ -804,9 +811,21 @@ const loadUserGender = async () => {
           )}
         </View>
 
-        <View style={styles.card}>
-          <View style={styles.savedHeader}>
-            <Text style={styles.sectionTitle}>Kayıtlı Semptomlar</Text>
+       <View
+  style={[
+    styles.card,
+    { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
+  ]}
+>
+  <View style={styles.savedHeader}>
+    <Text
+      style={[
+        styles.sectionTitle,
+        { color: isDark ? '#FFF' : '#8B2635' },
+      ]}
+    >
+      Kayıtlı Semptomlar
+    </Text>
 
             {savedSymptoms.length > 0 && (
               <TouchableOpacity onPress={clearAllRecords}>
@@ -1067,14 +1086,26 @@ const loadUserGender = async () => {
 };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 130 }}>
+    <View
+  style={[
+    styles.container,
+    { backgroundColor: isDark ? '#121212' : '#FFF5F6' }
+  ]}
+>
+      <ScrollView
+  contentContainerStyle={{
+    paddingBottom: 130,
+    backgroundColor: isDark ? '#121212' : '#FFF5F6'
+  }}
+>
        
 
-        <View style={styles.topTabContainer}>
+    
+<View style={styles.topTabContainer}>
   <TouchableOpacity
     style={[
       styles.topTabCard,
+      { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
       activeTab === 'form' && styles.topTabCardActive,
     ]}
     onPress={() => setActiveTab('form')}
@@ -1096,6 +1127,7 @@ const loadUserGender = async () => {
   <TouchableOpacity
     style={[
       styles.topTabCard,
+      { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
       activeTab === 'records' && styles.topTabCardActive,
     ]}
     onPress={() => setActiveTab('records')}
@@ -1117,6 +1149,7 @@ const loadUserGender = async () => {
   <TouchableOpacity
     style={[
       styles.topTabCard,
+      { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
       activeTab === 'analysis' && styles.topTabCardActive,
     ]}
     onPress={() => setActiveTab('analysis')}
@@ -1141,7 +1174,15 @@ const loadUserGender = async () => {
         {activeTab === 'analysis' && renderAnalysisTab()}
       </ScrollView>
 
-     <View style={styles.bottomNav}>
+     <View
+  style={[
+    styles.bottomNav,
+    {
+      backgroundColor: isDark ? '#1E1E1E' : '#FFF',
+      borderTopColor: isDark ? '#333' : '#f1e5e8',
+    },
+  ]}
+>
   <TouchableOpacity onPress={() => router.push('/home')} style={styles.navItem}>
     <Home size={22} color="#b9a7ab" />
     <Text style={styles.navText}>Ana Sayfa</Text>

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useThemeCustom } from '../../context/ThemeContext';
 import {
   Activity,
   Award,
@@ -39,7 +40,7 @@ import {
 
 export default function HomeScreen() {
   const router = useRouter();
-
+  const { isDark } = useThemeCustom(); //darkmode
   const [greeting, setGreeting] = useState('');
   const [selectedMood, setSelectedMood] = useState(null);
   const [streak] = useState(5);
@@ -53,6 +54,8 @@ export default function HomeScreen() {
   const [taskModalVisible, setTaskModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [taskText, setTaskText] = useState('');
+
+  
 
   const [tasks, setTasks] = useState([
     { id: 1, text: 'Nemlendirici sür', completed: false },
@@ -153,18 +156,42 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>{greeting}, Ganime</Text>
-            <Text style={styles.title}>Cildin nasıl? ✨</Text>
-          </View>
+  <View style={[
+    styles.container,
+    { backgroundColor: isDark ? '#121212' : '#FFF5F6' }
+  ]}>
+      <ScrollView
+  contentContainerStyle={[
+    styles.scrollContent,
+    { backgroundColor: isDark ? '#121212' : '#FFF5F6' }
+  ]}
+>
+       <View style={styles.header}>
+  <View>
+    <Text
+      style={[
+        styles.greeting,
+        { color: isDark ? '#AAA' : '#8B2635' },
+      ]}
+    >
+      {greeting}, Ganime
+    </Text>
 
-          
-        </View>
+    <Text
+      style={[
+        styles.title,
+        { color: isDark ? '#FFF' : '#8B2635' },
+      ]}
+    >
+      Cildin nasıl? ✨
+    </Text>
+  </View>
+</View>
 
-        <View style={styles.weatherRow}>
+        <View style={[
+  styles.weatherRow,
+  { backgroundColor: isDark ? '#1E1E1E' : 'transparent' }
+]}>
           <View style={styles.uvCard}>
             <Sun size={30} color="#fff" />
             <Text style={styles.uvLabel}>UV İndeksi</Text>
@@ -172,7 +199,12 @@ export default function HomeScreen() {
             <Text style={styles.uvText}>Güneş koruyucu tazele.</Text>
           </View>
 
-          <View style={styles.humidityCard}>
+          <View
+  style={[
+    styles.humidityCard,
+    { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
+  ]}
+>
             <Droplets size={28} color="#60a5fa" />
             <Text style={styles.humidityTitle}>%65</Text>
             <Text style={styles.humidityText}>Nem</Text>
@@ -205,7 +237,11 @@ export default function HomeScreen() {
             return (
               <TouchableOpacity
                 key={m.id}
-                style={[styles.moodCard, isSelected && styles.moodCardActive]}
+                style={[
+  styles.moodCard,
+  { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
+  isSelected && styles.moodCardActive,
+]}
                 onPress={() => {
                   setSelectedMood(m.id);
                   setAiOpen(true);
@@ -227,7 +263,12 @@ export default function HomeScreen() {
         </View>
 
         {aiOpen && (
-          <View style={styles.aiCard}>
+          <View
+  style={[
+    styles.aiCard,
+    { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
+  ]}
+>
             <View style={styles.aiHeader}>
               <View style={styles.aiIconBox}>
                 <Brain size={22} color="#fff" />
@@ -254,7 +295,10 @@ export default function HomeScreen() {
         )}
 
         <TouchableOpacity
-          style={styles.analysisCard}
+          style={[
+  styles.analysisCard,
+  { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
+]}
           activeOpacity={0.9}
           onPress={() =>
             Alert.alert(
@@ -293,7 +337,10 @@ export default function HomeScreen() {
           <View style={[styles.progressBar, { width: `${progress}%` }]} />
         </View>
 
-        <View style={styles.taskCard}>
+        <View style={[
+  styles.taskCard,
+  { backgroundColor: isDark ? '#1E1E1E' : '#FFF' }
+]}>
           {tasks.length === 0 ? (
             <Text style={styles.emptyText}>Henüz görev eklenmedi.</Text>
           ) : (
@@ -312,8 +359,9 @@ export default function HomeScreen() {
 
                   <Text
                     style={[
-                      styles.taskText,
-                      task.completed && styles.taskTextCompleted,
+                     styles.taskText,
+{ color: isDark ? '#FFF' : '#444' },
+task.completed && styles.taskTextCompleted,
                     ]}
                   >
                     {task.text}
@@ -338,7 +386,12 @@ export default function HomeScreen() {
           )}
         </View>
 
-        <View style={styles.infoCard}>
+        <View
+  style={[
+    styles.infoCard,
+    { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
+  ]}
+>
           <View style={styles.infoIconBox}>
             <Info size={18} color="#8B2635" />
           </View>
@@ -478,7 +531,15 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      <View style={styles.bottomNav}>
+      <View
+  style={[
+    styles.bottomNav,
+    {
+      backgroundColor: isDark ? '#1E1E1E' : '#FFF',
+      borderTopColor: isDark ? '#333' : '#f1e5e8',
+    },
+  ]}
+>
         <Pressable style={styles.navItem} onPress={() => router.push('/home')}>
           <Home size={22} color="#8B2635" />
           <Text style={[styles.navText, { color: '#8B2635' }]}>Ana Sayfa</Text>

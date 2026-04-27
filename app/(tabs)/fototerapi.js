@@ -1,5 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
+import { useThemeCustom } from '../../context/ThemeContext';
 import {
   Activity,
   BarChart3,
@@ -31,6 +32,8 @@ import {
 
 export default function FototerapiScreen() {
   const router = useRouter();
+  const { isDark } = useThemeCustom();
+  
 
   const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -120,24 +123,7 @@ export default function FototerapiScreen() {
       duration: '',
       isCompleted: false,
     },
-    {
-      id: 9,
-      planId: 1,
-      sessionNo: 9,
-      scheduledDate: '2026-05-04',
-      completedAt: null,
-      duration: '',
-      isCompleted: false,
-    },
-    {
-      id: 10,
-      planId: 1,
-      sessionNo: 10,
-      scheduledDate: '2026-05-06',
-      completedAt: null,
-      duration: '',
-      isCompleted: false,
-    },
+    
   ]);
 
   const [newPlanForm, setNewPlanForm] = useState({
@@ -629,74 +615,94 @@ export default function FototerapiScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
+    <View
+  style={[
+    styles.container,
+    { backgroundColor: isDark ? '#121212' : '#FFF5F6' },
+  ]}
+>
+    <ScrollView
+  contentContainerStyle={[
+    styles.scrollContent,
+    { backgroundColor: isDark ? '#121212' : '#FFF5F6' },
+  ]}
+>
 
-        <View style={styles.topTabs}>
-          <TouchableOpacity
-            style={[
-              styles.topTabButton,
-              activeTab === 'dashboard' && styles.topTabButtonActive,
-            ]}
-            onPress={() => setActiveTab('dashboard')}
-          >
-            <LayoutDashboard
-              size={16}
-              color={activeTab === 'dashboard' ? '#fff' : '#8B2635'}
-            />
-            <Text
-              style={[
-                styles.topTabText,
-                activeTab === 'dashboard' && styles.topTabTextActive,
-              ]}
-            >
-              Panel
-            </Text>
-          </TouchableOpacity>
+  <View
+    style={[
+      styles.topTabs,
+      { backgroundColor: isDark ? '#121212' : 'transparent' },
+    ]}
+  >
+    <TouchableOpacity
+      style={[
+        styles.topTabButton,
+        { backgroundColor: isDark ? '#1E1E1E' : '#fff' },
+        activeTab === 'dashboard' && styles.topTabButtonActive,
+      ]}
+      onPress={() => setActiveTab('dashboard')}
+    >
+      <LayoutDashboard
+        size={16}
+        color={activeTab === 'dashboard' ? '#fff' : '#8B2635'}
+      />
+      <Text
+        style={[
+          styles.topTabText,
+          { color: isDark ? '#fff' : '#8B2635' },
+          activeTab === 'dashboard' && styles.topTabTextActive,
+        ]}
+      >
+        Panel
+      </Text>
+    </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.topTabButton,
-              activeTab === 'history' && styles.topTabButtonActive,
-            ]}
-            onPress={() => setActiveTab('history')}
-          >
-            <History
-              size={16}
-              color={activeTab === 'history' ? '#fff' : '#8B2635'}
-            />
-            <Text
-              style={[
-                styles.topTabText,
-                activeTab === 'history' && styles.topTabTextActive,
-              ]}
-            >
-              Geçmiş
-            </Text>
-          </TouchableOpacity>
+    <TouchableOpacity
+      style={[
+        styles.topTabButton,
+        { backgroundColor: isDark ? '#1E1E1E' : '#fff' },
+        activeTab === 'history' && styles.topTabButtonActive,
+      ]}
+      onPress={() => setActiveTab('history')}
+    >
+      <History
+        size={16}
+        color={activeTab === 'history' ? '#fff' : '#8B2635'}
+      />
+      <Text
+        style={[
+          styles.topTabText,
+          { color: isDark ? '#fff' : '#8B2635' },
+          activeTab === 'history' && styles.topTabTextActive,
+        ]}
+      >
+        Geçmiş
+      </Text>
+    </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.topTabButton,
-              activeTab === 'new_plan' && styles.topTabButtonActive,
-            ]}
-            onPress={() => setActiveTab('new_plan')}
-          >
-            <Plus
-              size={16}
-              color={activeTab === 'new_plan' ? '#fff' : '#8B2635'}
-            />
-            <Text
-              style={[
-                styles.topTabText,
-                activeTab === 'new_plan' && styles.topTabTextActive,
-              ]}
-            >
-              Yeni Plan
-            </Text>
-          </TouchableOpacity>
-        </View>
+    <TouchableOpacity
+      style={[
+        styles.topTabButton,
+        { backgroundColor: isDark ? '#1E1E1E' : '#fff' },
+        activeTab === 'new_plan' && styles.topTabButtonActive,
+      ]}
+      onPress={() => setActiveTab('new_plan')}
+    >
+      <Plus
+        size={16}
+        color={activeTab === 'new_plan' ? '#fff' : '#8B2635'}
+      />
+      <Text
+        style={[
+          styles.topTabText,
+          { color: isDark ? '#fff' : '#8B2635' },
+          activeTab === 'new_plan' && styles.topTabTextActive,
+        ]}
+      >
+        Yeni Plan
+      </Text>
+    </TouchableOpacity>
+  </View>
 
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'history' && renderHistory()}
@@ -712,7 +718,15 @@ export default function FototerapiScreen() {
         />
       )}
 
-      <View style={styles.bottomNav}>
+      <View
+  style={[
+    styles.bottomNav,
+    {
+      backgroundColor: isDark ? '#1E1E1E' : '#fff',
+      borderTopColor: isDark ? '#333' : '#f1e5e8',
+    },
+  ]}
+>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => router.push('/home')}

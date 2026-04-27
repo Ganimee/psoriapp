@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { useRouter } from 'expo-router';
+import { useThemeCustom } from '../../context/ThemeContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -33,6 +34,7 @@ import {
 
 export default function TreatmentsScreen() {
   const router = useRouter();
+  const { isDark } = useThemeCustom();
 
   const [activeTab, setActiveTab] = useState('current');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -222,15 +224,26 @@ export default function TreatmentsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+  style={[
+    styles.container,
+    { backgroundColor: isDark ? '#121212' : '#FDF8F9' },
+  ]}
+>
      
 
-      <View style={styles.tabsWrapper}>
+      <View
+  style={[
+    styles.tabsWrapper,
+    { backgroundColor: isDark ? '#121212' : '#FDF8F9' },
+  ]}
+>
   <Pressable
     style={[
-      styles.tabBox,
-      activeTab === 'current' && styles.activeTabBox,
-    ]}
+  styles.tabBox,
+  { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
+  activeTab === 'current' && styles.activeTabBox,
+]}
     onPress={() => setActiveTab('current')}
   >
     <Text
@@ -245,9 +258,10 @@ export default function TreatmentsScreen() {
 
   <Pressable
     style={[
-      styles.tabBox,
-      activeTab === 'past' && styles.activeTabBox,
-    ]}
+  styles.tabBox,
+  { backgroundColor: isDark ? '#1E1E1E' : '#FFF' },
+  activeTab === 'past' && styles.activeTabBox,
+]}
     onPress={() => setActiveTab('past')}
   >
     <Text
@@ -261,7 +275,12 @@ export default function TreatmentsScreen() {
   </Pressable>
 </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+  contentContainerStyle={[
+    styles.scrollContent,
+    { backgroundColor: isDark ? '#121212' : '#FDF8F9' },
+  ]}
+>
         {list.length === 0 ? (
           <View style={styles.emptyBox}>
             <Pill size={38} color="#f0b1bb" />
@@ -275,7 +294,13 @@ export default function TreatmentsScreen() {
           list.map((item) => (
             <Pressable
               key={item.id}
-              style={styles.card}
+              style={[
+  styles.card,
+  {
+    backgroundColor: isDark ? '#1E1E1E' : '#FFF',
+    borderColor: isDark ? '#333' : '#faeef0',
+  },
+]}
               onPress={() => activeTab === 'current' && openEditModal(item)}
             >
               <View style={styles.cardTop}>
@@ -283,8 +308,12 @@ export default function TreatmentsScreen() {
                   <View style={styles.iconBox}>{getIcon(item.type)}</View>
 
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.typeText}>{item.type || 'Tür yok'}</Text>
+                    <Text style={[styles.name, { color: isDark ? '#FFF' : '#54151f' }]}>
+  {item.name}
+</Text>
+                    <Text style={[styles.typeText, { color: isDark ? '#AAA' : '#a46e77' }]}>
+  {item.type || 'Tür yok'}
+</Text>
                   </View>
                 </View>
 
@@ -334,9 +363,24 @@ export default function TreatmentsScreen() {
 
       <Modal visible={isModalOpen} transparent animationType="slide">
         <View style={styles.overlay}>
-          <Pressable style={styles.overlayBg} onPress={closeModal} />
+          <Pressable
+  style={[
+    styles.overlayBg,
+    {
+      backgroundColor: isDark
+        ? 'rgba(0,0,0,0.85)'
+        : 'rgba(84,21,31,0.42)',
+    },
+  ]}
+  onPress={closeModal}
+/>
 
-          <View style={styles.sheet}>
+          <View
+  style={[
+    styles.sheet,
+    { backgroundColor: isDark ? '#121212' : '#fff' },
+  ]}
+>
             <View style={styles.sheetHandle} />
 
             <View style={styles.sheetHeader}>
@@ -494,7 +538,15 @@ export default function TreatmentsScreen() {
         </View>
       </Modal>
 
-      <View style={styles.bottomNav}>
+      <View
+  style={[
+    styles.bottomNav,
+    {
+      backgroundColor: isDark ? '#1E1E1E' : '#FFF',
+      borderTopColor: isDark ? '#333' : '#f1e5e8',
+    },
+  ]}
+>
         <Pressable style={styles.navItem} onPress={() => router.push('/home')}>
           <Home size={22} color="#b9a7ab" />
           <Text style={styles.navText}>Ana Sayfa</Text>
