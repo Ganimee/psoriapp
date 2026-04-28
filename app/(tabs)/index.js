@@ -1,6 +1,6 @@
 import React from 'react';
-import Login from './login'; // Login.js yolunu kontrol et
+import Onboarding from './onboarding';
 
 export default function Index() {
-  return <Login />;
+  return <Onboarding />;
 }
