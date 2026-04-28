@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -33,6 +33,11 @@ import {
   Trophy,
   User,
   Zap,
+  Star,
+  Award,
+  Camera,
+  CalendarCheck,
+  TrendingUp,
 } from 'lucide-react-native';
 
 export default function ProfileScreen() {
@@ -45,10 +50,12 @@ export default function ProfileScreen() {
   const [showPermissions, setShowPermissions] = useState(false);
   const [showMissions, setShowMissions] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('monthly');
 
   const [notifications, setNotifications] = useState(true);
   const [cameraPermission, setCameraPermission] = useState(false);
   const [locationPermission, setLocationPermission] = useState(false);
+  
 
   const [skinType, setSkinType] = useState('karma');
   const [height, setHeight] = useState('170');
@@ -137,6 +144,36 @@ export default function ProfileScreen() {
   ];
 
   const [activeMissions, setActiveMissions] = useState([]);
+  const badges = [
+  {
+    id: 'first_login',
+    title: 'Başlangıç',
+    description: 'Uygulamayı kullanmaya başladı',
+    icon: <Star size={18} color="#F59E0B" />,
+    unlocked: true,
+  },
+  {
+    id: 'streak_badge',
+    title: 'Seri Takipçi',
+    description: '3 gün üst üste giriş yaptı',
+    icon: <Flame size={18} color="#F97316" />,
+    unlocked: stats.loginStreak >= 3,
+  },
+  {
+    id: 'photo_badge',
+    title: 'Fotoğraf Takipçisi',
+    description: 'İlk fotoğrafını ekledi',
+    icon: <Camera size={18} color="#8B2635" />,
+    unlocked: stats.totalPhotoCount >= 1,
+  },
+  {
+    id: 'symptom_badge',
+    title: 'Düzenli Gözlemci',
+    description: '5 semptom kaydı hedefi',
+    icon: <Award size={18} color="#2E7D32" />,
+    unlocked: stats.totalSymptomCount >= 5,
+  },
+];
 
   useEffect(() => {
     const processed = missionPool.map((mission) => {
@@ -193,17 +230,86 @@ export default function ProfileScreen() {
     setActiveMissions(visibleMissions);
   }, [stats, isPremium]);
 
-  const level = Math.floor(xp / 100) + 1;
-  const progressPercentage = xp % 100;
+  const getLevelInfo = (xpValue) => {
+  if (xpValue < 100) {
+    return {
+      level: 1,
+      title: 'Yeni Başlayan',
+      currentMin: 0,
+      nextLevelXp: 100,
+    };
+  }
+
+  if (xpValue < 250) {
+    return {
+      level: 2,
+      title: 'Takibe Başladı',
+      currentMin: 100,
+      nextLevelXp: 250,
+    };
+  }
+
+  if (xpValue < 500) {
+    return {
+      level: 3,
+      title: 'Düzenli Takipçi',
+      currentMin: 250,
+      nextLevelXp: 500,
+    };
+  }
+
+  if (xpValue < 900) {
+    return {
+      level: 4,
+      title: 'Bilinçli Kullanıcı',
+      currentMin: 500,
+      nextLevelXp: 900,
+    };
+  }
+
+  if (xpValue < 1500) {
+    return {
+      level: 5,
+      title: 'Sağlık Takipçisi',
+      currentMin: 900,
+      nextLevelXp: 1500,
+    };
+  }
+
+  return {
+    level: 6,
+    title: 'Psoriapp Uzmanı',
+    currentMin: 1500,
+    nextLevelXp: 2500,
+  };
+};
+
+const levelInfo = getLevelInfo(xp);
+const level = levelInfo.level;
+const levelTitle = levelInfo.title;
+
+const progressPercentage = Math.min(
+  100,
+  ((xp - levelInfo.currentMin) /
+    (levelInfo.nextLevelXp - levelInfo.currentMin)) *
+    100
+);
 
   const handleNotificationPermission = () => {
+  if (!notifications) {
     Alert.alert(
-      'Bilgi',
-      'Bildirim özelliği Expo Go içinde push olarak çalışmayabilir.'
+      'Bildirim Açıldı',
+      'Artık semptom takibi, fototerapi ve tedavi hatırlatmaları için bildirim alabilirsin.'
     );
+  } else {
+    Alert.alert(
+      'Bildirim Kapatıldı',
+      'Bildirim tercihlerin kapatıldı.'
+    );
+  }
 
-    setNotifications((prev) => !prev);
-  };
+  setNotifications((prev) => !prev);
+};
 
   const handleCameraPermission = () => {
     setCameraPermission((prev) => !prev);
@@ -255,10 +361,17 @@ export default function ProfileScreen() {
   };
 
   const handlePurchase = () => {
-    setIsPremium(true);
-    Alert.alert('Başarılı', 'Premium üyelik aktif edildi.');
-    setView('main');
-  };
+  setIsPremium(true);
+
+  Alert.alert(
+    'Başarılı',
+    selectedPlan === 'monthly'
+      ? 'Aylık premium üyelik aktif edildi. Tutar: 19.90 TL'
+      : 'Yıllık premium üyelik aktif edildi. Tutar: 189.90 TL'
+  );
+
+  setView('main');
+};
 
   const Option = ({ icon, label, onPress, rightComponent }) => (
     <TouchableOpacity
@@ -345,65 +458,86 @@ export default function ProfileScreen() {
         </Text>
       </View>
 
-      <View
+      <TouchableOpacity
+  activeOpacity={0.85}
+  onPress={() => setView('levelDetail')}
+  style={[
+    styles.levelCard,
+    {
+      backgroundColor: darkMode ? '#1E1E1E' : '#FFF',
+      borderColor: darkMode ? '#333' : '#FCE8EC',
+    },
+  ]}
+>
+  <View style={styles.levelTop}>
+    <View style={styles.levelLeft}>
+      <View style={styles.trophyBox}>
+        <Trophy size={18} color="#FFF" />
+      </View>
+
+      <View>
+        <Text
+          style={[
+            styles.levelSmallText,
+            { color: darkMode ? '#AAA' : '#A05555' },
+          ]}
+        >
+          GELİŞİM
+        </Text>
+
+        <Text
+          style={[
+            styles.levelText,
+            { color: darkMode ? '#FFF' : '#8B2635' },
+          ]}
+        >
+          SEVİYE {level}
+        </Text>
+
+        <Text
+          style={[
+            styles.levelTitleText,
+            { color: darkMode ? '#AAA' : '#A05555' },
+          ]}
+        >
+          {levelTitle}
+        </Text>
+      </View>
+    </View>
+
+    <View style={styles.xpBox}>
+      <Text style={styles.xpLabel}>XP</Text>
+      <Text
         style={[
-          styles.levelCard,
-          {
-            backgroundColor: darkMode ? '#1E1E1E' : '#FFF',
-            borderColor: darkMode ? '#333' : '#FCE8EC',
-          },
+          styles.xpText,
+          { color: darkMode ? '#FFF' : '#8B2635' },
         ]}
       >
-        <View style={styles.levelTop}>
-          <View style={styles.levelLeft}>
-            <View style={styles.trophyBox}>
-              <Trophy size={18} color="#FFF" />
-            </View>
+        {xp}
+      </Text>
+    </View>
+  </View>
 
-            <View>
-              <Text
-                style={[
-                  styles.levelSmallText,
-                  { color: darkMode ? '#AAA' : '#A05555' },
-                ]}
-              >
-                GELİŞİM
-              </Text>
-              <Text
-                style={[
-                  styles.levelText,
-                  { color: darkMode ? '#FFF' : '#8B2635' },
-                ]}
-              >
-                SEVİYE {level}
-              </Text>
-            </View>
-          </View>
+  <View style={styles.progressBg}>
+    <View
+      style={[
+        styles.progressFill,
+        {
+          width: `${progressPercentage}%`,
+        },
+      ]}
+    />
+  </View>
 
-          <View style={styles.xpBox}>
-            <Text style={styles.xpLabel}>XP</Text>
-            <Text
-              style={[
-                styles.xpText,
-                { color: darkMode ? '#FFF' : '#8B2635' },
-              ]}
-            >
-              {xp}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.progressBg}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width: `${progressPercentage}%`,
-              },
-            ]}
-          />
-        </View>
-      </View>
+  <Text
+    style={[
+      styles.nextLevelText,
+      { color: darkMode ? '#AAA' : '#A05555' },
+    ]}
+  >
+    Sonraki seviyeye {levelInfo.nextLevelXp - xp} XP kaldı
+  </Text>
+</TouchableOpacity>
 
       <View
         style={[
@@ -825,6 +959,240 @@ export default function ProfileScreen() {
     </ScrollView>
   );
 
+const renderLevelDetailView = () => {
+  const todayXp = 15;
+
+  const levels = [
+    {
+      id: 1,
+      title: 'Yeni Başlayan',
+      xp: '0 - 99',
+      status: level > 1 ? 'completed' : level === 1 ? 'current' : 'locked',
+    },
+    {
+      id: 2,
+      title: 'Takibe Başladı',
+      xp: '100 - 249',
+      status: level > 2 ? 'completed' : level === 2 ? 'current' : 'locked',
+    },
+    {
+      id: 3,
+      title: 'Düzenli Takipçi',
+      xp: '250 - 499',
+      status: level > 3 ? 'completed' : level === 3 ? 'current' : 'locked',
+    },
+    {
+      id: 4,
+      title: 'Bilinçli Kullanıcı',
+      xp: '500 - 899',
+      status: level > 4 ? 'completed' : level === 4 ? 'current' : 'locked',
+    },
+    {
+      id: 5,
+      title: 'Sağlık Takipçisi',
+      xp: '900 - 1499',
+      status: level > 5 ? 'completed' : level === 5 ? 'current' : 'locked',
+    },
+    {
+      id: 6,
+      title: 'Psoriapp Uzmanı',
+      xp: '1500+',
+      status: level === 6 ? 'current' : 'locked',
+    },
+  ];
+
+  return (
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
+      <View style={styles.levelDetailHeader}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => setView('main')}
+        >
+          <Feather name="chevron-left" size={20} color="#8B2635" />
+          <Text style={styles.backButtonText}>Geri Dön</Text>
+        </TouchableOpacity>
+
+        <View style={styles.levelSettingsButton}>
+          <Settings size={18} color="#AAA" />
+        </View>
+      </View>
+
+      <Text style={[styles.title, { color: darkMode ? '#FFF' : '#8B2635' }]}>
+        Seviye Bilgileri
+      </Text>
+
+      <View
+        style={[
+          styles.levelHeroCard,
+          {
+            backgroundColor: darkMode ? '#1E1E1E' : '#FFF',
+            borderColor: darkMode ? '#333' : '#FAD2D8',
+          },
+        ]}
+      >
+        <Trophy
+          size={80}
+          color={darkMode ? '#333' : '#FAD2D8'}
+          style={styles.levelHeroBgIcon}
+        />
+
+        <Text style={styles.levelDetailSmallTitle}>Mevcut Seviye</Text>
+
+        <View style={styles.levelHeroRow}>
+          <View style={styles.levelHeroIconBox}>
+            <Award size={24} color="#FFF" />
+          </View>
+
+          <Text
+            style={[
+              styles.levelHeroTitle,
+              { color: darkMode ? '#FFF' : '#8B2635' },
+            ]}
+          >
+            Seviye {level}
+          </Text>
+        </View>
+
+        <Text style={styles.levelHeroSubTitle}>{levelTitle}</Text>
+      </View>
+
+      <View
+        style={[
+          styles.levelXpCard,
+          {
+            backgroundColor: darkMode ? '#1E1E1E' : '#FFF',
+            borderColor: darkMode ? '#333' : '#FAD2D8',
+          },
+        ]}
+      >
+        <View style={styles.levelXpTop}>
+          <View>
+            <Text style={styles.levelDetailSmallTitle}>XP Durumu</Text>
+            <Text
+              style={[
+                styles.levelXpValue,
+                { color: darkMode ? '#FFF' : '#8B2635' },
+              ]}
+            >
+              {xp} XP
+            </Text>
+          </View>
+
+          <View style={styles.todayXpBadge}>
+            <TrendingUp size={14} color="#2E7D32" />
+            <Text style={styles.todayXpText}>+{todayXp} Bugün</Text>
+          </View>
+        </View>
+
+        <View style={styles.levelProgressBg}>
+          <View
+            style={[
+              styles.levelProgressFill,
+              { width: `${progressPercentage}%` },
+            ]}
+          />
+        </View>
+
+        <Text style={styles.levelRemainingText}>
+          Sonraki seviyeye{' '}
+          <Text style={styles.levelRemainingBold}>
+            {levelInfo.nextLevelXp - xp} XP
+          </Text>{' '}
+          kaldı
+        </Text>
+      </View>
+
+      <Text style={styles.levelMapTitle}>Seviye Haritası</Text>
+
+      <View style={styles.levelMapContainer}>
+        {levels.map((item, index) => (
+          <View key={item.id} style={styles.levelMapRow}>
+            {index !== levels.length - 1 && (
+              <View
+                style={[
+                  styles.levelMapLine,
+                  {
+                    backgroundColor:
+                      item.status === 'completed' ? '#8B2635' : '#E5E7EB',
+                  },
+                ]}
+              />
+            )}
+
+            <View
+              style={[
+                styles.levelMapIcon,
+                item.status === 'completed' && styles.levelMapIconCompleted,
+                item.status === 'current' && styles.levelMapIconCurrent,
+                item.status === 'locked' && styles.levelMapIconLocked,
+              ]}
+            >
+              {item.status === 'completed' ? (
+                <CheckCircle2 size={20} color="#FFF" />
+              ) : item.status === 'current' ? (
+                <Award size={20} color="#8B2635" />
+              ) : (
+                <Lock size={18} color="#CCC" />
+              )}
+            </View>
+
+            <View
+              style={[
+                styles.levelMapCard,
+                {
+                  backgroundColor: darkMode ? '#1E1E1E' : '#FFF',
+                  borderColor:
+                    item.status === 'current'
+                      ? '#8B2635'
+                      : darkMode
+                      ? '#333'
+                      : '#F1F1F1',
+                },
+                item.status === 'current' && styles.levelMapCardCurrent,
+              ]}
+            >
+              <View>
+                <Text
+                  style={[
+                    styles.levelMapNumber,
+                    {
+                      color: item.status === 'locked' ? '#AAA' : '#8B2635',
+                    },
+                  ]}
+                >
+                  Seviye {item.id}
+                </Text>
+
+                <Text
+                  style={[
+                    styles.levelMapName,
+                    {
+                      color:
+                        item.status === 'locked'
+                          ? '#AAA'
+                          : darkMode
+                          ? '#FFF'
+                          : '#333',
+                    },
+                  ]}
+                >
+                  {item.title}
+                </Text>
+              </View>
+
+              <Text style={styles.levelMapXp}>{item.xp} XP</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
+};
+  
+
   const renderSubscriptionView = () => (
   <ScrollView contentContainerStyle={styles.scrollContent}>
     <TouchableOpacity style={styles.backButton} onPress={() => setView('main')}>
@@ -854,6 +1222,60 @@ export default function ProfileScreen() {
         Premium Ayrıcalıkları
       </Text>
 
+      <View style={styles.planContainer}>
+        <TouchableOpacity
+          style={[
+            styles.planCard,
+            selectedPlan === 'monthly' && styles.selectedPlanCard,
+          ]}
+          onPress={() => setSelectedPlan('monthly')}
+        >
+          <Text
+            style={[
+              styles.planTitle,
+              selectedPlan === 'monthly' && styles.selectedPlanTitle,
+            ]}
+          >
+            Aylık Üyelik
+          </Text>
+          <Text
+            style={[
+              styles.planPrice,
+              selectedPlan === 'monthly' && styles.selectedPlanPrice,
+            ]}
+          >
+            20 TL
+          </Text>
+          <Text style={styles.planDesc}>Her ay yenilenir</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.planCard,
+            selectedPlan === 'yearly' && styles.selectedPlanCard,
+          ]}
+          onPress={() => setSelectedPlan('yearly')}
+        >
+          <Text
+            style={[
+              styles.planTitle,
+              selectedPlan === 'yearly' && styles.selectedPlanTitle,
+            ]}
+          >
+            Yıllık Üyelik
+          </Text>
+          <Text
+            style={[
+              styles.planPrice,
+              selectedPlan === 'yearly' && styles.selectedPlanPrice,
+            ]}
+          >
+            180 TL
+          </Text>
+          <Text style={styles.planDesc}>Yılda bir yenilenir</Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.subscriptionItem}>✓ %50 Fazla XP Bonusu</Text>
       <Text style={styles.subscriptionItem}>✓ Sınırsız Fotoğraf Arşivi</Text>
       <Text style={styles.subscriptionItem}>✓ Reklamsız Deneyim</Text>
@@ -871,16 +1293,16 @@ export default function ProfileScreen() {
                 'Premium İptali',
                 'Premium aboneliğini iptal etmek istiyor musun?',
                 [
-                  {
-                    text: 'Vazgeç',
-                    style: 'cancel',
-                  },
+                  { text: 'Vazgeç', style: 'cancel' },
                   {
                     text: 'İptal Et',
                     style: 'destructive',
                     onPress: () => {
                       setIsPremium(false);
-                      Alert.alert('İptal Edildi', 'Premium aboneliğin iptal edildi.');
+                      Alert.alert(
+                        'İptal Edildi',
+                        'Premium aboneliğin iptal edildi.'
+                      );
                       setView('main');
                     },
                   },
@@ -912,6 +1334,7 @@ export default function ProfileScreen() {
       {view === 'main' && renderMainView()}
       {view === 'user' && renderUserView()}
       {view === 'password' && renderPasswordView()}
+      {view === 'levelDetail' && renderLevelDetailView()}
       {view === 'subscription' && renderSubscriptionView()}
 
       <View
@@ -1426,4 +1849,324 @@ cancelPremiumButtonText: {
     color: '#b9a7ab',
     textAlign: 'center',
   },
+  subscriptionPrice: {
+  color: '#F59E0B',
+  fontSize: 26,
+  fontWeight: '900',
+  marginBottom: 18,
+},
+planContainer: {
+  width: '100%',
+  flexDirection: 'row',
+  gap: 10,
+  marginBottom: 20,
+},
+
+planCard: {
+  flex: 1,
+  backgroundColor: '#FFF5F6',
+  borderRadius: 16,
+  padding: 14,
+  borderWidth: 1,
+  borderColor: '#FAD2D8',
+  alignItems: 'center',
+},
+
+selectedPlanCard: {
+  backgroundColor: '#8B2635',
+  borderColor: '#8B2635',
+},
+
+planTitle: {
+  color: '#8B2635',
+  fontWeight: 'bold',
+  fontSize: 13,
+},
+
+selectedPlanTitle: {
+  color: '#FFF',
+},
+
+planPrice: {
+  color: '#F59E0B',
+  fontWeight: '900',
+  fontSize: 20,
+  marginTop: 6,
+},
+
+selectedPlanPrice: {
+  color: '#FFF',
+},
+
+planDesc: {
+  color: '#A05555',
+  fontSize: 11,
+  marginTop: 5,
+  textAlign: 'center',
+},
+levelTitleText: {
+  fontSize: 11,
+  fontWeight: 'bold',
+  marginTop: 2,
+},
+
+nextLevelText: {
+  fontSize: 11,
+  fontWeight: 'bold',
+  marginTop: 8,
+  textAlign: 'right',
+},
+
+levelDetailCard: {
+  borderWidth: 1,
+  borderRadius: 22,
+  padding: 16,
+  marginBottom: 15,
+},
+
+levelDetailTitle: {
+  fontSize: 13,
+  fontWeight: 'bold',
+},
+
+levelDetailValue: {
+  fontSize: 22,
+  fontWeight: '900',
+  marginTop: 6,
+},
+
+levelDetailSub: {
+  fontSize: 12,
+  color: '#A05555',
+  marginTop: 4,
+  fontWeight: 'bold',
+},
+
+levelItem: {
+  fontSize: 13,
+  color: '#8B2635',
+  marginTop: 8,
+  fontWeight: 'bold',
+},
+levelDetailHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 8,
+},
+
+levelSettingsButton: {
+  width: 38,
+  height: 38,
+  borderRadius: 19,
+  backgroundColor: '#FFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  elevation: 2,
+},
+
+levelHeroCard: {
+  borderWidth: 1,
+  borderRadius: 28,
+  padding: 22,
+  marginBottom: 18,
+  overflow: 'hidden',
+  position: 'relative',
+  elevation: 2,
+},
+
+levelHeroBgIcon: {
+  position: 'absolute',
+  right: 14,
+  top: 12,
+  opacity: 0.45,
+},
+
+levelDetailSmallTitle: {
+  fontSize: 11,
+  fontWeight: '900',
+  color: '#AAA',
+  textTransform: 'uppercase',
+  marginBottom: 8,
+},
+
+levelHeroRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 8,
+},
+
+levelHeroIconBox: {
+  width: 45,
+  height: 45,
+  borderRadius: 14,
+  backgroundColor: '#8B2635',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginRight: 12,
+},
+
+levelHeroTitle: {
+  fontSize: 24,
+  fontWeight: '900',
+},
+
+levelHeroSubTitle: {
+  color: '#8B2635',
+  fontSize: 14,
+  fontWeight: 'bold',
+  opacity: 0.8,
+},
+
+levelXpCard: {
+  borderWidth: 1,
+  borderRadius: 28,
+  padding: 22,
+  marginBottom: 24,
+  elevation: 2,
+},
+
+levelXpTop: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'flex-end',
+  marginBottom: 16,
+},
+
+levelXpValue: {
+  fontSize: 30,
+  fontWeight: '900',
+},
+
+todayXpBadge: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#E8F5E9',
+  paddingHorizontal: 9,
+  paddingVertical: 5,
+  borderRadius: 999,
+},
+
+todayXpText: {
+  color: '#2E7D32',
+  fontSize: 11,
+  fontWeight: '900',
+  marginLeft: 4,
+},
+
+levelProgressBg: {
+  width: '100%',
+  height: 10,
+  backgroundColor: '#F1F1F1',
+  borderRadius: 999,
+  overflow: 'hidden',
+  marginBottom: 8,
+},
+
+levelProgressFill: {
+  height: '100%',
+  backgroundColor: '#8B2635',
+  borderRadius: 999,
+},
+
+levelRemainingText: {
+  fontSize: 12,
+  color: '#777',
+  fontWeight: 'bold',
+},
+
+levelRemainingBold: {
+  color: '#8B2635',
+  fontWeight: '900',
+},
+
+levelMapTitle: {
+  fontSize: 13,
+  fontWeight: '900',
+  color: '#8B2635',
+  textTransform: 'uppercase',
+  letterSpacing: 1,
+  marginBottom: 18,
+},
+
+levelMapContainer: {
+  paddingBottom: 20,
+},
+
+levelMapRow: {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  marginBottom: 16,
+  position: 'relative',
+},
+
+levelMapLine: {
+  position: 'absolute',
+  left: 19,
+  top: 40,
+  width: 2,
+  height: 48,
+},
+
+levelMapIcon: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  borderWidth: 2,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+  zIndex: 2,
+},
+
+levelMapIconCompleted: {
+  backgroundColor: '#8B2635',
+  borderColor: '#8B2635',
+},
+
+levelMapIconCurrent: {
+  backgroundColor: '#FFF',
+  borderColor: '#8B2635',
+},
+
+levelMapIconLocked: {
+  backgroundColor: '#FFF',
+  borderColor: '#E5E7EB',
+},
+
+levelMapCard: {
+  flex: 1,
+  borderWidth: 1,
+  borderRadius: 18,
+  padding: 14,
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+},
+
+levelMapCardCurrent: {
+  elevation: 3,
+  transform: [{ translateY: -2 }],
+},
+
+levelMapNumber: {
+  fontSize: 11,
+  fontWeight: '900',
+},
+
+levelMapName: {
+  fontSize: 14,
+  fontWeight: '900',
+  marginTop: 3,
+},
+
+levelMapXp: {
+  fontSize: 10,
+  fontWeight: '900',
+  color: '#999',
+  backgroundColor: '#F8F8F8',
+  paddingHorizontal: 8,
+  paddingVertical: 5,
+  borderRadius: 8,
+},
 });
